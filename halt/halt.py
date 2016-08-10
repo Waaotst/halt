@@ -5,29 +5,18 @@ import logging
 from halt.util import stringify
 from halt.util import objectify
 from halt.util import table_columns
-from halt.util import dict_to_2tuple
 from halt.util import do_con
+from halt.util import prep_first_time_mash
+from halt.util import seperate_mash
 
 
-def load_column(db, table, *column, cond):
-    '''
-    yields the results
-    '''
-    with sqlite3.connect(db):
-        query = 'select ' + column + ' from ' + table + ' ' + condition
+def load_column(db, table, *columns, cond=''):
+    with sqlite3.connect(db) as con:
+        column_str = ', '.join(column for column in columns)
+        query = 'select ' + column_str + ' from ' + table + ' ' + cond
         cur = con.cursor()
         cur.execute(query)
-        yield cur.fetchall()
-
-
-def _prepare_insert_with_mash(column_names, update):
-    mash = {}
-    for thing in dict(update):
-        if thing not in column_names:
-            mash[thing] = update[thing]
-            del update[thing]
-    update['MashConfig'] = stringify(mash)
-    return update
+        return cur.fetchall()
 
 
 def insert(db, table, update, mash=False, commit=True, con=False):
@@ -46,7 +35,7 @@ def insert(db, table, update, mash=False, commit=True, con=False):
     update = dict(update)
     if mash:
         column_names = table_columns(cur, table)
-        update = _prepare_insert_with_mash(column_names, update)
+        update = prep_first_time_mash(column_names, update)
 
     columns = ', '.join(update.keys())
     placeholders = ':' + ', :'.join(update.keys())
@@ -65,50 +54,59 @@ def insert(db, table, update, mash=False, commit=True, con=False):
     else:
         return con
 
-
-def update(db, table, update, cond, mash=False):
+# Todo commit stuff
+def update(db, table, updates, cond='', mash=False, commit=True, con=False):
     """
-    updates first all columns that are in the dict,
+    updates or creates.
+    first all keys that match columns in the table are updated
     if mash is true it will udpate the rest into mash.
-    """
 
-    con = _con(con)
+    :updates: all key, values to be updates
+
+    WARNING: when mash = True only update one row..
+    """
+    con = do_con(db, con)
     cur = con.cursor()
 
-    column_updates = {}
+    column_names = table_columns(cur, table)
+    column_updates, mash_updates = seperate_mash(updates, column_names)
 
-    for column in table_columns(cur, table):
-        if column in update:
-            column_updates[column] = update[column]
-            del update[column]
-
-
-    # all the is left in update will be mashed
     mash_updates = {}
-    if mashconfig:
-        query = 'select MashConfig from ' + table + ' ' + condition
+    if mash:
+        query = 'select MashConfig from ' + table + ' ' + cond
         cur.execute(query)
         current_mash = cur.fetchone()[0]
         if current_mash:
-            mash_updates = dict(objectify(current_mash)).update(update)
-
+            mash_updates = dict(objectify(current_mash), **updates)
 
     # do the queries
-    if mash_updates and not column_updates:
-        update_str = stringify(dict_to_2tuple(mash_updates))
-        query = 'UPDATE ' + table + ' SET MashConfig= (?) ' + condition
-        cur.execute(query, (update_str, ))
+    if mash_updates:
+        all_updates = dict(column_updates, **{'MashConfig': mash_updates})
     else:
-        update_values = stringify(dict_to_2tuple(column_updates))
-        cur.execute(query, obj)
+        all_updates = column_updates
+    tupled = [(k, v) for k, v in all_updates.items()]
+    placeholders = ', '.join(k + ' =?' for k, v in tupled)
+    query = 'UPDATE {} SET {} {}'.format(table, placeholders, cond)
+    values = []
+    for k, v in tupled:
+        if isinstance(v, (tuple, list, dict)):
+            values.append(stringify(v))
+        else:
+            values.append(v)
+
+    cur.execute(query, values)
+
+    if commit:
         con.commit()
+    else:
+        return con
 
 
-def delete(db, table, cond):
+def delete(db, table, cond=''):
     '''
     deletes rows which match the condition
     '''
-    with sqlite3.connect(db):
+    with sqlite3.connect(db) as con:
         cur = con.cursor()
         query = "delete from %s %s" % (table, cond)
         cur.execute(query)

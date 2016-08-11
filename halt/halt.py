@@ -9,6 +9,7 @@ from halt.util import do_con
 from halt.util import prep_first_time_mash
 from halt.util import seperate_mash
 
+class HaltException(Exception):pass
 
 def load_column(db, table, columns, cond=''):
     assert type(columns) in (list, tuple)
@@ -45,10 +46,10 @@ def insert(db, table, update, mash=False, commit=True, con=False):
 
     try:
         cur.execute(query, update)
-    except sqlite3.InterfaceError:
+    except Exception as err:
         cur.close()
         con.close()
-        raise
+        raise HaltException(err)
 
     if commit:
         con.commit()

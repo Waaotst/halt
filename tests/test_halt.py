@@ -9,6 +9,7 @@ from halt import load_column
 from halt import delete
 from halt import update
 from halt import objectify
+from halt import HaltException
 
 from test_util import *
 

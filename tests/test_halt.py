@@ -40,7 +40,7 @@ class TestHalt():
         insert(self.db, 'Test', data, mash=True, commit=True, con=False)
         assert ([(None, None, '{"random": 15}')] == get_all_data(self.db))
 
-    def test_isnert_with_mash_and_columns(self):
+    def test_insert_with_mash_and_columns(self):
         data = {'Name': 'bob', 'random': 15}
         insert(self.db, 'Test', data, mash=True, commit=True, con=False)
         assert ([('bob', None, '{"random": 15}')] == get_all_data(self.db))
@@ -48,9 +48,9 @@ class TestHalt():
     def test_load_column(self):
         data = {'Name': 'bob', 'Password': 'pass', 'random': 15}
         insert(self.db, 'Test', data, mash=True)
-        assert 'bob' == load_column(self.db, 'Test', 'Name')[0][0]
+        assert 'bob' == load_column(self.db, 'Test', ('Name',))[0][0]
         assert ('bob', 'pass') == load_column(self.db,
-                                             'Test', 'Name', 'Password')[0]
+                                             'Test', ('Name', 'Password'))[0]
 
     def test_delete(self):
         data = {'Name': 'bob', 'Password': 'pass', 'random': 15}

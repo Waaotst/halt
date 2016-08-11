@@ -10,7 +10,8 @@ from halt.util import prep_first_time_mash
 from halt.util import seperate_mash
 
 
-def load_column(db, table, *columns, cond=''):
+def load_column(db, table, columns, cond=''):
+    assert type(columns) in (list, tuple)
     with sqlite3.connect(db) as con:
         column_str = ', '.join(column for column in columns)
         query = 'select ' + column_str + ' from ' + table + ' ' + cond

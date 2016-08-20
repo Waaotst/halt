@@ -46,6 +46,8 @@ def insert(db, table, update, mash=False, commit=True, con=False):
 
     try:
         cur.execute(query, update)
+        if commit:
+            rowid = cur.lastrowid
     except Exception as err:
         cur.close()
         con.close()
@@ -53,6 +55,7 @@ def insert(db, table, update, mash=False, commit=True, con=False):
 
     if commit:
         con.commit()
+        return rowid
     else:
         return con
 

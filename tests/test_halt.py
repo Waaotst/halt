@@ -33,7 +33,8 @@ class TestHalt():
 
     def test_insert(self):
         data = {'Name': 'bob', 'Password': 'password'}
-        insert(self.db, 'Test', data, mash=False, commit=True, con=False)
+        rowid = insert(self.db, 'Test', data, mash=False, commit=True, con=False)
+        assert type(rowid) == int
         assert ([('bob', 'password', None)] == get_all_data(self.db))
 
     def test_insert_only_mash(self):

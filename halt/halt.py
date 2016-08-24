@@ -1,3 +1,9 @@
+'''
+    Pretty simple databse helper
+    MashConfig is a Column that stores a dictionary.
+    It will automatically jsonify objects up to depth 1 (not nested)
+'''
+
 import os
 import sqlite3
 import logging

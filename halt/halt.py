@@ -79,6 +79,9 @@ def update(db, table, updates, cond='', mash=False, commit=True, con=False):
     con = do_con(db, con)
     cur = con.cursor()
 
+    # stop mutability
+    updates = dict(updates)
+
     column_names = table_columns(cur, table)
     column_updates, mash_updates = seperate_mash(updates, column_names)
 

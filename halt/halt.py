@@ -50,7 +50,10 @@ def load_row(db, table, cond='', headers=True):
         if do_mash:
             new_results = []
             for row in results:
-                new_row = row[:i] + (objectify(row[i]),) + row[i+1:]
+                if row[i]:
+                    new_row = row[:i] + (objectify(row[i]),) + row[i+1:]
+                else:
+                    new_results.append(row)
                 new_results.append(new_row)
             results = new_results
 

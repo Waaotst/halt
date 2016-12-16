@@ -18,6 +18,7 @@ from halt.util import seperate_mash
 class HaltException(Exception):pass
 
 def load_column(db, table, columns, cond=''):
+    ''' load a column or columns, do not use with mashconfig'''
     assert type(columns) in (list, tuple)
     with sqlite3.connect(db) as con:
         column_str = ', '.join(column for column in columns)
@@ -25,6 +26,42 @@ def load_column(db, table, columns, cond=''):
         cur = con.cursor()
         cur.execute(query)
         return cur.fetchall()
+
+
+def load_row(db, table, cond='', headers=True):
+    '''load a row/rows, handles mashconfig'''
+    with sqlite3.connect(db) as con:
+        query = 'SELECT * FROM {} {}'.format(table, cond)
+        cur = con.cursor()
+        cur.execute(query)
+        results =  cur.fetchall()
+
+        # TODO split into function
+        column_names = table_columns(cur, table)
+        try:
+            i = column_names.index('MashConfig')
+        except IndexError:
+            do_mash = False
+            return results
+        else:
+            do_mash = True
+
+        # Turn the mashconfig into objects
+        if do_mash:
+            new_results = []
+            for row in results:
+                new_row = row[:i] + (objectify(row[i]),) + row[i+1:]
+                new_results.append(new_row)
+            results = new_results
+
+        # Returns a dict of headings to row value
+        if headers:
+            new_results = []
+            for row in results:
+                new_row = {header: row[i] for i, header in enumerate(table_columns(cur, table))}
+                new_results.append(new_row)
+            results = new_results
+        return results
 
 
 def insert(db, table, update, mash=False, commit=True, con=False):

@@ -6,6 +6,7 @@ import pytest
 
 from halt import insert
 from halt import load_column
+from halt import load_row
 from halt import delete
 from halt import update
 from halt import objectify
@@ -53,6 +54,13 @@ class TestHalt():
         assert 'bob' == load_column(self.db, 'Test', ('Name',))[0][0]
         assert ('bob', 'pass') == load_column(self.db,
                                              'Test', ('Name', 'Password'))[0]
+
+    def test_load_row(self):
+        data = {'Name': 'bob', 'Password': 'pass', 'random': 15}
+        insert(self.db, 'Test', data, mash=True)
+        assert [('bob', 'pass', {'random':15})] == load_row(self.db, 'Test', headers=False)
+        should = [{'MashConfig': {'random': 15}, 'Password': 'pass', 'Name': 'bob'}]
+        assert should == load_row(self.db, 'Test')
 
     def test_delete(self):
         data = {'Name': 'bob', 'Password': 'pass', 'random': 15}

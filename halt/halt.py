@@ -53,7 +53,7 @@ def load_row(db, table, cond='', headers=True):
                 if row[i]:
                     new_row = row[:i] + (objectify(row[i]),) + row[i+1:]
                 else:
-                    new_results.append(row)
+                    new_row = row
                 new_results.append(new_row)
             results = new_results
 
@@ -125,7 +125,6 @@ def update(db, table, updates, cond='', mash=False, commit=True, con=False):
     column_names = table_columns(cur, table)
     column_updates, mash_updates = seperate_mash(updates, column_names)
 
-    mash_updates = {}
     if mash:
         query = 'select MashConfig from ' + table + ' ' + cond
         cur.execute(query)

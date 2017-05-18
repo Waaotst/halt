@@ -68,7 +68,6 @@ class TestHalt():
         delete(self.db, 'Test', "where Name == 'bob'")
         assert not get_all_data(self.db)
 
-    @pytest.mark.here
     def test_update_columns(self):
         data = {'Name': 'bob', 'Password': 'pass', 'random': 15}
         insert(self.db, 'Test', data, mash=True)
@@ -79,23 +78,39 @@ class TestHalt():
 
     @pytest.mark.here
     def test_update_only_mash(self):
-        data = {'Name': 'bob', 'Password': 'pass', 'r': 1, 'r2':2}
-        insert(self.db, 'Test', data, mash=True)
+        # First test when NOTHING in the MashConfig column
+        data = {'Name': 'bob', 'Password': 'pass'}
+        insert(self.db, 'Test', data, mash=False)
 
-        new_data = {'r': 20, 'r3': 3}
+        new_data = {'r': 1, 'r2': 2}
         update(self.db, 'Test', new_data, mash=True, cond="where Name == 'bob'")
         results = get_all_data(self.db)
         assert results[0][:2] == ('bob', 'pass')
-        dict_cmp({"r": 20, "r2": 2, "r3": 3}, objectify(results[0][2]))
+        dict_cmp({"r": 1, "r2": 2}, objectify(results[0][2]))
+
+        # Now test with something existing in the mashconfig column
+        new_data = {'r': 10, 'r3': 30}
+        update(self.db, 'Test', new_data, mash=True, cond="where Name == 'bob'")
+        results = get_all_data(self.db)
+        assert results[0][:2] == ('bob', 'pass')
+        dict_cmp({"r": 10, "r2": 2, "r3": 30}, objectify(results[0][2]))
 
     @pytest.mark.here
     def test_update_with_mash_and_columns(self):
-        data = {'Name': 'bob', 'Password': 'pass', 'r': 1, 'r2':2}
-        insert(self.db, 'Test', data, mash=True)
+        # First test when NOTHING in the MashConfig column
+        data = {'Name': 'bob', 'Password': 'pass'}
+        insert(self.db, 'Test', data, mash=False)
 
-        new_data = {'Name': 'tom', 'r': 20, 'r3': 3}
+        new_data = {'Name': 'tom', 'r': 1, 'r2': 2}
         update(self.db, 'Test', new_data, mash=True, cond="where Name == 'bob'")
         results = get_all_data(self.db)
         assert results[0][:2] == ('tom', 'pass')
-        dict_cmp({"r": 20, "r2": 2, "r3": 3}, objectify(results[0][2]))
+        dict_cmp({"r": 1, "r2": 2}, objectify(results[0][2]))
+
+        # Now test with something existing in the mashconfig column
+        new_data = {'Name': 'peter', 'r': 10, 'r3': 30}
+        update(self.db, 'Test', new_data, mash=True, cond="where Name == 'tom'")
+        results = get_all_data(self.db)
+        assert results[0][:2] == ('peter', 'pass')
+        dict_cmp({"r": 10, "r2": 2, "r3": 30}, objectify(results[0][2]))
 

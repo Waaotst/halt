@@ -3,7 +3,7 @@ from codecs import open
 
 setup(
     name = 'halt',
-    version='0.1.0',
+    version='0.1.1',
     description = 'very light wieght db helper for sqlite, has some small mashconfig magic',
     author='timothy eichler',
     author_email='tim_eichler@hotmail.com',
